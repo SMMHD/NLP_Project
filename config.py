@@ -1,10 +1,11 @@
 import os
 
-DATA_DIR = "data"
-DB_DIR = "faiss_db"
+# تغییر نام پوشه‌ها برای جلوگیری از تشابه
+CORPUS_DIR = "pdf_docs"
+VECTOR_INDEX_DIR = "knowledge_db"
 
-# تغییر مدل به یک مدل سبک‌تر و متفاوت
-EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+# مدل قدرتمند و دقیق که قبلاً تست کردیم
+EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-large"
 
-GROQ_API_KEY = "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" # کلید API برادرت یا همان کلید قبلی را بگذار
-
+# کلید API
+GROQ_API_TOKEN = "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" 

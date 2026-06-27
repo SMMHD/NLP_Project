@@ -38,10 +38,9 @@ if st.button("پیدا کن") and user_input:
         
         # نرمال‌سازی و اضافه کردن query: مخصوص مدل E5
         clean_input = query_normalizer.normalize(user_input)
-        search_term = f"query: {clean_input}"
         
-        # استفاده از جستجوی معمولی (طبق پروژه خودت)
-        retrieved_docs = db_instance.similarity_search_with_score(search_term, k=6)
+        # جستجوی عمیق‌تر با k=8 (افزایش شعاع جستجو)
+        retrieved_docs = db_instance.similarity_search_with_score(clean_input, k=8)
         
         if not retrieved_docs:
             st.error("پاسخ این سؤال در اسناد موجود یافت نشد.")
@@ -50,21 +49,32 @@ if st.button("پیدا کن") and user_input:
             references = []
             
             for document, distance_val in retrieved_docs:
-                extracted_context += f"\nمتن مرجع: {document.page_content}\n"
-                references.append({
-                    "doc": document.metadata.get('document', 'نامعلوم'),
-                    "pg": document.metadata.get('page', 'نامعلوم'),
-                    "score": round(distance_val, 3)
-                })
+                # در فضای cosine مدل E5، فاصله‌های زیر 0.35 معمولاً مرتبط هستند
+                # اگر فاصله خیلی زیاد بود (متن بی‌ربط)، آن را نادیده بگیر
+                if distance_val < 0.4:
+                    extracted_context += f"\nمتن مرجع: {document.page_content}\n"
+                    references.append({
+                        "doc": document.metadata.get('document', 'نامعلوم'),
+                        "pg": document.metadata.get('page', 'نامعلوم'),
+                        "score": round(distance_val, 3)
+                    })
+            
+            # اگر بعد از فیلتر هیچ متنی نماند، جواب منفی بده
+            if not extracted_context.strip():
+                st.error("پاسخ این سؤال در اسناد موجود یافت نشد.")
+                st.stop()
                 
             ai_prompt = """
-            شما یک راهنمای دانشگاهی هستید. فقط بر اساس متون استخراج شده زیر به کاربر پاسخ دهید.
-            در صورتی که جواب در این متون نیست، دقیقا بنویسید: "پاسخ این سؤال در اسناد موجود یافت نشد."
+            شما یک دستیار هوشمند دانشگاهی هستید. 
+            وظیفه شما این است که با دقت متون زیر را بخوانید و ارتباط معنایی آن‌ها را با پرسش کاربر پیدا کنید.
+            سپس یک پاسخ کامل، روان و بر اساس متن‌ها ارائه دهید.
+            اگر پاسخ در متن‌ها وجود دارد اما کلمات آن کمی متفاوت است، مفهوم را درک کرده و پاسخ دهید.
+            فقط اگر هیچ پاسخی (حتی مفهومی) در متون پیدا نکردید بنویسید: "پاسخ این سؤال در اسناد موجود یافت نشد."
             
-            متون:
+            متون استخراج شده:
             {context}
             
-            پرسش: {query}
+            پرسش کاربر: {query}
             """
             
             template = ChatPromptTemplate.from_template(ai_prompt)

@@ -8,4 +8,4 @@ VECTOR_INDEX_DIR = "knowledge_db"
 EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-large"
 
 # کلید API
-GROQ_API_TOKEN = "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" 
+GROQ_API_TOKEN = "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" 
